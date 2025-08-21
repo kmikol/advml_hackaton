@@ -48,10 +48,13 @@ def tflite_mae(tfl_bytes: bytes, X: np.ndarray, y: np.ndarray) -> float:
 
 # -------------------------- Main Train --------------------------
 def main():
+
+    conf = yaml.safe_load(open("config/config.yaml"))
+
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, default="data/power_consumption_tetouan")
-    parser.add_argument("--params_path", type=str, default="artifacts/best_model_params.yaml")
-    parser.add_argument("--out_dir", type=str, default="model_registry/env")
+    parser.add_argument("--data_path", type=str, default=conf['data_path'])
+    parser.add_argument("--params_path", type=str, default=os.path.join(conf['artifacts_path'], "best_model_params.yaml"))
+    parser.add_argument("--out_dir", type=str, default=conf['model_registry_path'])
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 

@@ -6,7 +6,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from sklearn.linear_model import LinearRegression
-
+import yaml
 import optuna
 
 from model_utils import (set_seed,build_base_model,count_dense_macs,representative_ds_fn,to_int8_tflite)
@@ -157,17 +157,20 @@ def main(args):
 
 
 if __name__ == "__main__":
+
+    conf = yaml.safe_load(open("config/config.yaml"))
+
     parser = argparse.ArgumentParser(description="Power Consumption Training")
-    parser.add_argument("--data_path", type=str, default="data/power_consumption_tetouan",
+    parser.add_argument("--data_path", type=str, default=conf["data_path"],
                         help="Path to the data directory")
-    parser.add_argument("--model_registry_path", type=str, default="models/env",
+    parser.add_argument("--model_registry_path", type=str, default=conf["model_registry_path"],
                         help="Path to the model registry directory")
 
     # NEW: HPO controls
     parser.add_argument("--use_qat", action="store_true", help="Enable Quantization Aware Training")
-    parser.add_argument("--pretrain_epochs", type=int, default=10)
-    parser.add_argument("--qat_epochs", type=int, default=40)
-    parser.add_argument("--hpo_trials", type=int, default=100)
+    parser.add_argument("--pretrain_epochs", type=int, default=conf['pretrain_epochs'])
+    parser.add_argument("--qat_epochs", type=int, default=conf['qat_epochs'])
+    parser.add_argument("--hpo_trials", type=int, default=conf['hpo_trials'])
     parser.add_argument("--optimize_on_tflite_mae", action="store_true",
                         help="Use TFLite-INT8 validation MAE as the HPO objective")
 

@@ -1,0 +1,10 @@
+pandas
+matplotlib
+numpy
+tensorflow
+bleak
+optuna
+scikit-learn
+tensorflow_model_optimization
+seaborn
+tf_keras

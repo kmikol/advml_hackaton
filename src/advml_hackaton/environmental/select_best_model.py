@@ -6,7 +6,7 @@ import os
 def main(args):
 
     # load pareto front data
-    pareto_quant_df = pd.read_csv(os.path.join(args.artifacts_path, "pareto_front_quantized.csv"))
+    pareto_quant_df = pd.read_csv(os.path.join(args.artifacts_path, "pareto_front.csv"))
 
 
     # find trial with the lowest val_mae under the size threshold
@@ -22,11 +22,13 @@ def main(args):
 
 if __name__ == "__main__":
 
+    conf = yaml.safe_load(open("config/config.yaml"))
+
     parser = argparse.ArgumentParser(description="Select the best model from the Pareto front.")
-    parser.add_argument("--artifacts_path", type=str, default="artifacts/", 
+    parser.add_argument("--artifacts_path", type=str, default=conf["artifacts_path"], 
                             help="Path to the artifacts directory.")
     parser.add_argument("--metric", type=str, default="val_mae_tflite", help="The metric to optimize.")
-    parser.add_argument("--max_model_size_kb", type=float, default=16, help="The maximum model size (KB) for the selected metric.")
+    parser.add_argument("--max_model_size_kb", type=float, default=conf['max_model_size_kb'], help="The maximum model size (KB) for the selected metric.")
     args = parser.parse_args()
 
     main(args)

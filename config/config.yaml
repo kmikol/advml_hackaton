@@ -1,0 +1,10 @@
+seed: 42
+data_path: "data/power_consumption_tetouan"
+model_registry_path: "model_registry/environmental"
+artifacts_path: "artifacts"
+
+pretrain_epochs: 2
+qat_epochs: 3
+hpo_trials: 10
+
+max_model_size_kb: 16
