@@ -1,9 +1,34 @@
+"""
+This module selects the best model from the Pareto front based on a specified metric and size constraint. 
+It reads the Pareto front data, filters models by size, and selects the one with the optimal metric value.
+
+Main functionalities:
+- Filtering models based on size constraints.
+- Selecting the best model based on a specified metric.
+- Exporting the parameters of the selected model to a YAML file.
+"""
+
 import argparse
 import pandas as pd
 import yaml
 import os
 
 def main(args):
+    """
+    Main function to select the best model from the Pareto front.
+
+    Steps:
+    - Loads the Pareto front data from a CSV file.
+    - Filters models based on the maximum size constraint.
+    - Selects the model with the optimal value for the specified metric.
+    - Exports the parameters of the selected model to a YAML file.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing paths, metric, and size constraints.
+
+    Returns:
+        None
+    """
 
     # load pareto front data
     pareto_quant_df = pd.read_csv(os.path.join(args.artifacts_path, "pareto_front.csv"))

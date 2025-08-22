@@ -1,3 +1,14 @@
+"""
+This module performs hyperparameter optimization (HPO) for machine learning models using Optuna. 
+It supports both floating-point and quantization-aware training (QAT) models, and evaluates them 
+using TensorFlow Lite for deployment on resource-constrained devices.
+
+Main functionalities:
+- Running HPO with multi-objective optimization (e.g., minimizing MAE and MACs).
+- Supporting Quantization Aware Training (QAT) for INT8 model quantization.
+- Exporting Pareto-optimal models and their metadata.
+"""
+
 from data_utils import get_data
 import argparse
 import os
@@ -23,6 +34,25 @@ def run_optuna_hpo(
     use_qat=True,  # turn QAT on/off
     optimize_on_tflite_mae=True  # use INT8 val MAE as objective if True
 ):
+    """
+    Runs hyperparameter optimization using Optuna to find Pareto-optimal models.
+
+    Args:
+        train (dict): Training dataset with keys 'X' and 'y'.
+        val (dict): Validation dataset with keys 'X' and 'y'.
+        input_dim (int): Number of input features.
+        n_trials (int): Number of HPO trials. Default is 40.
+        pretrain_epochs (int): Number of epochs for pretraining. Default is 10.
+        qat_epochs (int): Number of epochs for QAT fine-tuning. Default is 10.
+        batch_size (int): Batch size for training. Default is 64.
+        float_lr (float): Learning rate for floating-point training. Default is 1e-3.
+        qat_lr (float): Learning rate for QAT fine-tuning. Default is 3e-4.
+        use_qat (bool): Whether to enable Quantization Aware Training. Default is True.
+        optimize_on_tflite_mae (bool): Whether to use TFLite-INT8 validation MAE as the objective. Default is True.
+
+    Returns:
+        optuna.Study: The Optuna study object containing the results.
+    """
     rng = np.random.default_rng(0)
     tf.keras.utils.set_random_seed(0)
 
@@ -140,6 +170,15 @@ def run_optuna_hpo(
 
 
 def main(args):
+    """
+    Main function to perform hyperparameter optimization and export Pareto-optimal models.
+
+    Args:
+        args (argparse.Namespace): Command-line arguments containing data paths and HPO settings.
+
+    Returns:
+        None
+    """
     # get dataset
     train, val, test, data_params = get_data(args.data_path)
 

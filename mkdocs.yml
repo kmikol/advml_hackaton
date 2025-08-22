@@ -1,4 +1,4 @@
-site_name: Ad
+site_name: Advanced ML Hackaton
 theme:
   name: material
 plugins:
@@ -17,8 +17,6 @@ nav:
   - Home: index.md
   - Environmental:
       - Overview: environmental.md
-    #  - Data preprocessing: environmental-data-preprocessing.md
-    #  - Hyperparameter optimization: environmental-hyperparameter-optimization.md
 watch:
   - src
 

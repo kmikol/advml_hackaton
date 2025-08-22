@@ -1,3 +1,14 @@
+"""
+This module provides functionality for real-time data acquisition and plotting from Arduino devices over Bluetooth Low Energy (BLE). 
+It supports time synchronization, BLE notifications, and synthetic data generation for debugging.
+
+Main functionalities:
+- Connecting to BLE devices and subscribing to notifications.
+- Parsing BLE packets into structured data.
+- Generating synthetic data for testing without BLE hardware.
+- Real-time plotting of temperature, humidity, and predictions.
+"""
+
 #!/usr/bin/env python3
 # ble_live_plot.py — realtime plots from Arduino BLE, with time sync (service/char UUIDs)
 
@@ -21,6 +32,15 @@ class Sample:
     ts: float; day: float; year: float; temp: float; hum: float; y: float
 
 def parse_packet(data: bytes) -> Optional[Sample]:
+    """
+    Parses a BLE packet into a structured Sample object.
+
+    Args:
+        data (bytes): The raw BLE packet data.
+
+    Returns:
+        Optional[Sample]: A Sample object containing parsed data, or None if the packet is invalid.
+    """
     if len(data) < 20: return None
     day, year, temp, hum, y = struct.unpack("<5f", data[:20])
     return Sample(time.time(), day, year, float(temp), float(hum), float(y))
@@ -30,6 +50,19 @@ def _uuid_eq(a: str, b: str) -> bool:
 
 # ------------- BLE reader with time sync -------------
 def start_ble_reader(service_uuid: str, tx_uuid: str, rx_uuid: str, out_q: queue.Queue, resync_period_s: int = 60):
+    """
+    Starts a BLE reader thread to receive data from a BLE device and synchronize time.
+
+    Args:
+        service_uuid (str): The UUID of the BLE service to connect to.
+        tx_uuid (str): The UUID of the notify characteristic.
+        rx_uuid (str): The UUID of the write characteristic for time synchronization.
+        out_q (queue.Queue): A queue to store received data samples.
+        resync_period_s (int): The time interval (in seconds) for periodic time synchronization. Default is 60.
+
+    Returns:
+        threading.Thread: The thread running the BLE reader.
+    """
     if BleakScanner is None:
         print("bleak not installed. `pip install bleak` or use --fake", file=sys.stderr); sys.exit(1)
 
@@ -113,6 +146,16 @@ def start_ble_reader(service_uuid: str, tx_uuid: str, rx_uuid: str, out_q: queue
 
 # ------------- Fake data (debug) -------------
 def start_fake_reader(period_s: float, out_q: queue.Queue):
+    """
+    Starts a thread to generate synthetic data for debugging purposes.
+
+    Args:
+        period_s (float): The time interval (in seconds) between generated samples.
+        out_q (queue.Queue): A queue to store generated data samples.
+
+    Returns:
+        threading.Thread: The thread running the fake data generator.
+    """
     import math
     def worker():
         t0 = time.time()
@@ -130,6 +173,17 @@ def start_fake_reader(period_s: float, out_q: queue.Queue):
 
 # ------------- Plotting -------------
 def run_plot(out_q: queue.Queue, window_s: float, interval_ms: int):
+    """
+    Runs a real-time plot of data received from the queue.
+
+    Args:
+        out_q (queue.Queue): A queue containing data samples to plot.
+        window_s (float): The time window (in seconds) to display on the plot.
+        interval_ms (int): The update interval (in milliseconds) for the plot.
+
+    Returns:
+        None
+    """
     from collections import deque
     t_buf, hum_buf, tmp_buf, y_buf = deque(), deque(), deque(), deque()
 
@@ -180,6 +234,17 @@ def run_plot(out_q: queue.Queue, window_s: float, interval_ms: int):
 
 # ------------- CLI -------------
 def main():
+    """
+    Main function to run the BLE data acquisition and plotting application.
+
+    Steps:
+    - Parses command-line arguments.
+    - Starts either a BLE reader or a fake data generator.
+    - Runs the real-time plotting interface.
+
+    Returns:
+        None
+    """
     import argparse
     ap = argparse.ArgumentParser(description="Live plot Arduino BLE data (temp, hum, prediction) with time sync.")
     ap.add_argument("--service", default=SERVICE_UUID, help="Service UUID to match")

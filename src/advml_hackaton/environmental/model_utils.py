@@ -1,14 +1,46 @@
+"""
+This module provides utility functions for building, quantizing, and exporting machine learning models, 
+as well as generating normalization headers for embedded systems.
+
+Main functionalities:
+- Setting random seeds for reproducibility.
+- Building TensorFlow models with customizable layers and activations.
+- Quantizing models to INT8 format for deployment on resource-constrained devices.
+- Writing model data and normalization parameters to C/C++ headers for embedded use.
+"""
+
 import tensorflow as tf
 import numpy as np
 from pathlib import Path
 import re
 
-def set_seed(seed: int = 0):
+def set_seed(seed: int = 42):
+    """
+    Sets the random seed for reproducibility in both NumPy and TensorFlow.
+
+    Args:
+        seed (int): The random seed value. Default is 42.
+
+    Returns:
+        None
+    """
     np.random.seed(seed)
     tf.keras.utils.set_random_seed(seed)
 
 
 def build_base_model(input_dim: int, n_layers: int, n_units: int, out_act: str):
+    """
+    Builds a sequential TensorFlow model with specified input dimensions, layers, and activation functions.
+
+    Args:
+        input_dim (int): The number of input features.
+        n_layers (int): The number of hidden layers.
+        n_units (int): The number of units in each hidden layer.
+        out_act (str): The activation function for the output layer.
+
+    Returns:
+        tf.keras.Sequential: The constructed TensorFlow model.
+    """
     m = tf.keras.Sequential([tf.keras.layers.Input(shape=(input_dim,), name="x")])
     for _ in range(n_layers):
         m.add(tf.keras.layers.Dense(n_units, activation="relu"))
@@ -17,7 +49,15 @@ def build_base_model(input_dim: int, n_layers: int, n_units: int, out_act: str):
     return m
 
 def count_dense_macs(model: tf.keras.Model) -> int:
-    """MACs for Dense layers; unwrap QuantizeWrapper if present."""
+    """
+    Calculates the Multiply-Accumulate Operations (MACs) for Dense layers in a TensorFlow model.
+
+    Args:
+        model (tf.keras.Model): The TensorFlow model to analyze.
+
+    Returns:
+        int: The total number of MACs for Dense layers.
+    """
     macs = 0
     for layer in model.layers:
         base = getattr(layer, "layer", layer)
@@ -28,6 +68,17 @@ def count_dense_macs(model: tf.keras.Model) -> int:
 
 
 def representative_ds_fn(X, n=256, seed=0):
+    """
+    Generates a representative dataset for TensorFlow Lite quantization.
+
+    Args:
+        X (array-like): The input data.
+        n (int): The number of samples to include in the representative dataset. Default is 256.
+        seed (int): Random seed for sampling. Default is 0.
+
+    Yields:
+        list: A batch of input samples for quantization.
+    """
     X = np.asarray(X, dtype=np.float32)
     rng = np.random.default_rng(seed)
     if X.shape[0] > n:
@@ -37,6 +88,16 @@ def representative_ds_fn(X, n=256, seed=0):
 
 
 def to_int8_tflite(model: tf.keras.Model, rep_ds):
+    """
+    Converts a TensorFlow model to an INT8-quantized TensorFlow Lite model.
+
+    Args:
+        model (tf.keras.Model): The TensorFlow model to convert.
+        rep_ds (function): A representative dataset function for quantization.
+
+    Returns:
+        bytes: The INT8-quantized TensorFlow Lite model as a byte array.
+    """
     conv = tf.lite.TFLiteConverter.from_keras_model(model)
     conv.optimizations = [tf.lite.Optimize.DEFAULT]
     conv.representative_dataset = rep_ds
@@ -50,6 +111,17 @@ def to_int8_tflite(model: tf.keras.Model, rep_ds):
 
 
 def write_c_array(tflite_bytes: bytes, var="g_model", out_dir=Path("artifacts")):
+    """
+    Writes a TensorFlow Lite model as a C array for embedded deployment.
+
+    Args:
+        tflite_bytes (bytes): The TensorFlow Lite model in byte format.
+        var (str): The variable name for the C array. Default is "g_model".
+        out_dir (Path): The output directory for the generated files. Default is "artifacts".
+
+    Returns:
+        tuple: Paths to the generated .cc and .h files.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     h_path = out_dir / "model.h"
     cc_path = out_dir / "model.cc"
@@ -69,6 +141,19 @@ def write_c_array(tflite_bytes: bytes, var="g_model", out_dir=Path("artifacts"))
 
 def write_c_array_hex(tflite_bytes: bytes, var="g_model",
                       out_dir=Path("artifacts"), bytes_per_line=16, uppercase=True):
+    """
+    Writes a TensorFlow Lite model as a C array in hexadecimal format for embedded deployment.
+
+    Args:
+        tflite_bytes (bytes): The TensorFlow Lite model in byte format.
+        var (str): The variable name for the C array. Default is "g_model".
+        out_dir (Path): The output directory for the generated files. Default is "artifacts".
+        bytes_per_line (int): The number of bytes per line in the output. Default is 16.
+        uppercase (bool): Whether to use uppercase hexadecimal letters. Default is True.
+
+    Returns:
+        tuple: Paths to the generated .cc and .h files.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
     h_path = out_dir / "model.h"
     cc_path = out_dir / "model.cc"
@@ -102,9 +187,16 @@ def write_normalization_header(stats: dict,
                                filename: str = "normalization_data.h",
                                namespace: str = "norm"):
     """
-    stats: dict with keys like
-      x_features, y_features, x_mean, x_std, y_mean, y_std, ...
-    Writes a header with arrays + inline normalization helpers.
+    Generates a C++ header file containing normalization parameters and helper functions.
+
+    Args:
+        stats (dict): A dictionary containing normalization statistics (e.g., means, stds).
+        out_dir (Path): The output directory for the header file. Default is "artifacts".
+        filename (str): The name of the header file. Default is "normalization_data.h".
+        namespace (str): The C++ namespace for the generated code. Default is "norm".
+
+    Returns:
+        str: The path to the generated header file.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / filename

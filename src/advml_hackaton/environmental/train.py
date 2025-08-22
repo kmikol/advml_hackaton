@@ -1,3 +1,16 @@
+"""
+This module trains a machine learning model for power consumption prediction. 
+It supports both floating-point and quantization-aware training (QAT) models, 
+and exports the trained model in various formats for deployment.
+
+Main functionalities:
+- Training a TensorFlow model with configurable hyperparameters.
+- Supporting Quantization Aware Training (QAT) for INT8 model quantization.
+- Evaluating the model using both Keras and TensorFlow Lite.
+- Exporting the trained model as Keras, TFLite, and C array formats.
+- Saving training metrics and normalization parameters.
+"""
+
 import argparse
 import json
 import os
@@ -22,6 +35,17 @@ from model_utils import (set_seed,
 
 
 def tflite_mae(tfl_bytes: bytes, X: np.ndarray, y: np.ndarray) -> float:
+    """
+    Calculates the Mean Absolute Error (MAE) for a TensorFlow Lite model.
+
+    Args:
+        tfl_bytes (bytes): The TensorFlow Lite model in byte format.
+        X (np.ndarray): Input features for evaluation.
+        y (np.ndarray): Ground truth labels for evaluation.
+
+    Returns:
+        float: The calculated MAE.
+    """
     interp = tf.lite.Interpreter(model_content=tfl_bytes)
     interp.allocate_tensors()
     inp = interp.get_input_details()[0]
@@ -48,6 +72,18 @@ def tflite_mae(tfl_bytes: bytes, X: np.ndarray, y: np.ndarray) -> float:
 
 # -------------------------- Main Train --------------------------
 def main():
+    """
+    Main function to train a machine learning model and export the results.
+
+    Steps:
+    - Loads the dataset and model parameters.
+    - Builds and trains the model with optional QAT.
+    - Evaluates the model using Keras and TensorFlow Lite.
+    - Exports the trained model and metrics.
+
+    Returns:
+        None
+    """
 
     conf = yaml.safe_load(open("config/config.yaml"))
 
