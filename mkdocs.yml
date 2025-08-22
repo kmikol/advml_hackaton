@@ -17,6 +17,8 @@ nav:
   - Home: index.md
   - Environmental:
       - Overview: environmental.md
+      - Insturctions: environmental-instructions.md
+      - Functions: environmental-functions.md
 watch:
   - src
 

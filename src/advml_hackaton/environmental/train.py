@@ -91,11 +91,14 @@ def main():
     parser.add_argument("--data_path", type=str, default=conf['data_path'])
     parser.add_argument("--params_path", type=str, default=os.path.join(conf['artifacts_path'], "best_model_params.yaml"))
     parser.add_argument("--out_dir", type=str, default=conf['model_registry_path'])
+    parser.add_argument("--arduino_dir", type=str, default=conf['arduino_project_path'])
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir)
+    arduino_dir = Path(args.arduino_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    arduino_dir.mkdir(parents=True, exist_ok=True)
     set_seed(args.seed)
 
     # Load data
@@ -164,11 +167,17 @@ def main():
     tfl_path = out_dir / "model.tflite"
     tfl_path.write_bytes(tfl)
 
-    # 3) Arduino C array
+    # 3) Arduino C array to model registery and arduino path
+    cc_path, h_path = write_c_array_hex(tfl, out_dir=arduino_dir)
     cc_path, h_path = write_c_array_hex(tfl, out_dir=out_dir)
 
     write_normalization_header(stats=get_data_meta(args.data_path),
                                out_dir=out_dir,
+                               filename="normalization_data.h",
+                               namespace="norm")
+
+    write_normalization_header(stats=get_data_meta(args.data_path),
+                               out_dir=arduino_dir,
                                filename="normalization_data.h",
                                namespace="norm")
 
