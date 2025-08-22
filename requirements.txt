@@ -8,3 +8,7 @@ scikit-learn
 tensorflow_model_optimization
 seaborn
 tf_keras
+mkdocs
+mkdocs-material
+mkdocstrings
+mkdocstrings[python]
