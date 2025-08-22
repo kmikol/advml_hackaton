@@ -1,0 +1,14 @@
+# Tiny On-Device Gesture Classifier (Arduino Nano 33 BLE Sense)
+
+A minimal end-to-end demo that trains a tiny sequence classifier on 4-gesture tokens and runs it **fully on-device** on an Arduino Nano 33 BLE Sense (APDS-9960 gesture sensor). Python trains a multinomial logistic regression and exports `model_weights.h`; the Arduino sketch buffers 4 gestures, runs `W·x+b`, and lights an RGB LED for the predicted class.
+
+> **Data management note:** because the APDS-9960 provides only **UP, DOWN, LEFT, RIGHT**, this project ships with a **synthetic dataset** (length-4 sequences) plus a clean switch to load real, logged CSV later.
+
+---
+
+## Quickstart
+
+1. **Clone & set up Python**
+   ```bash
+   python -m venv .venv && source .venv/bin/activate   # (Windows: .venv\Scripts\activate)
+   pip install -r requirements.txt
